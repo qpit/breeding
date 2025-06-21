@@ -33,12 +33,9 @@ def GPS_Andersen(r, theta, phi, n, alpha = 0, inf = 1e-8):
     return state
 
 
-def get_input_sq_cat(num, r_dB, parity, which, eta, MP = False, fast = False):
+def get_input_sq_cat(num, r_dB, parity, which, eta, fast = False):
     """Get squeezed cat for input to breeding circuit
     """
-    if fast:
-        raise ValueError('Fast representation is numerically unstable for squeezed cats here.')
-
     
     r_cat = dB_to_r(r_dB)
     
@@ -52,10 +49,10 @@ def get_input_sq_cat(num, r_dB, parity, which, eta, MP = False, fast = False):
     #alpha = np.sqrt(num)*np.sqrt(np.pi * np.sqrt(3)/2)*np.exp(r_cat) #Hexagonal
     #alpha = np.sqrt(num)*np.sqrt(np.pi/hbar * 2/np.sqrt(3))*np.exp(r_cat) #Hexagonal 
         
-    sq_cat = prepare_sqz_cat_coherent(r_cat, alpha, parity, MP, fast)
+    sq_cat = prepare_sqz_cat_coherent(r_cat, alpha, parity, fast)
 
     if which =='hex':
-        sq_cat.apply_symplectic(squeezing((3)**(1/4), np.pi/4))
+        sq_cat.apply_symplectic(squeezing(np.log(3**(1/4)), 2*np.pi/4))
   
     #Apply loss to squeezed cat
     #---------------------------

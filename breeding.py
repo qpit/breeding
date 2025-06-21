@@ -5,17 +5,19 @@ from mpmath import mp
 
 
 
-def sim_breeding_circuit(input_state, num, phis, results, out = False, MP = False, bs_thetas = None, rot =False):
+def sim_breeding_circuit(input_state, num, phis, results, out = False, bs_hex = False, rot =False):
     """Simulate the breeding of num copies of the input_state
     """
     multistate = deepcopy(input_state)
+    multistate.normalise()
+    n1 = multistate.norm
         
     if out:
         print('Input data shape', multistate.means.shape, multistate.covs.shape, multistate.weights.shape)
         print('norm', multistate.norm)
     
     for i in range(1,num):
-        multistate.add_state(input_state, MP=MP)
+        multistate.add_state(input_state)
         
         if out:
             print('norm', multistate.norm)
@@ -26,10 +28,10 @@ def sim_breeding_circuit(input_state, num, phis, results, out = False, MP = Fals
             print('newstate shape', multistate.means.shape, multistate.covs.shape, multistate.weights.shape)
 
         #Apply custom beamsplitters if given
-        if bs_thetas:
-            S = beam_splitter(bs_thetas[i-1][0],bs_thetas[i-1][1])
+        if bs_hex:
+            S = beam_splitter(np.arccos(np.sqrt(1/(1+i))),np.pi/3)
             if out:
-                print(f'Applying BS({bs_thetas[i-1][0]}{bs_thetas[i-1][1]}) on modes {i-1},{i}')
+                print(f'Applying BS({np.arccos(np.sqrt(1/(1+i)))}{np.pi/4}) on modes {i-1},{i}')
         #Apply 
         else:
             #Apply beam splitter
@@ -42,30 +44,35 @@ def sim_breeding_circuit(input_state, num, phis, results, out = False, MP = Fals
         if out:
             print('num_k', multistate.num_k, 'num_weights', multistate.num_weights, 'norm', multistate.norm)
        
-        multistate.post_select_homodyne(0, phis[i-1], results[i-1], MP)
+        multistate.post_select_homodyne(0, phis[i-1], results[i-1])
         
           
         if out:
-            print(f'Measure p={results[i-1]} on mode {i-1} with conditional prob {multistate.norm}')
+            print(f'Measure p={results[i-1]} on mode {i-1} with conditional prob {multistate.norm/n1**i}')
     
         #Reduce
-        multistate.reduce_equal_means(MP)
+        
+        multistate.reduce_equal_means()
         
         if out:
             print('new no. of weights: ', multistate.num_weights)
-            print('norm', multistate.norm)
-            
-    return multistate, multistate.norm
 
-def sample_breeding_circuit(input_state, num, out = False, MP = False, bs_thetas = None):
-    """Simulate the breeding of num copies of the input_state
+    multistate.normalise()
+            
+    return multistate, multistate.norm/n1**num
+
+def sample_breeding_circuit(input_state, num, out = False, bs_thetas = None):
+    """Sample the breeding of num copies of the input_state
     """
     samples = np.zeros(num-1)
     rejects = np.zeros(num-1)
+    
     multistate = deepcopy(input_state)
+    multistate.normalise()
+    n1 = multistate.norm
         
     for i in range(1,num):
-        multistate.add_state(input_state, MP=MP)
+        multistate.add_state(input_state)
 
         #Apply custom beamsplitters if given
         if bs_thetas:
@@ -84,12 +91,10 @@ def sample_breeding_circuit(input_state, num, out = False, MP = False, bs_thetas
 
         multistate.apply_symplectic(xxpp_to_xpxp(R@S))
 
-        sample, reject = multistate.sample_dyne([0], shots = 1, MP=MP)
+        sample, reject = multistate.sample_dyne([0], shots = 1)
         sample = sample[0,0]
        
-
-        
-        multistate.post_select_homodyne(0, 0, sample, MP)
+        multistate.post_select_homodyne(0, 0, sample)
         samples[i-1] = sample
         rejects[i-1] = len(reject) #store the number of rejections
         
@@ -97,13 +102,15 @@ def sample_breeding_circuit(input_state, num, out = False, MP = False, bs_thetas
             print(f'Measure p={sample} on mode {i-1} with conditional prob {multistate.norm}')
     
         #Reduce
-        multistate.reduce_equal_means(MP)
+        multistate.reduce_equal_means()
+        
         
         if out:
             print('new no. of weights: ', multistate.num_weights)
-            print('norm', multistate.norm)
-            
-    return multistate, multistate.norm, samples, rejects
+            print('norm', multistate.norm/n1**i)
+    multistate.normalise()
+    
+    return multistate, multistate.norm/n1**num, samples, rejects
 
 
 def multi_breed_state(input_state, num, out = False, MP = False, bs_thetas = None, rot =False):
@@ -123,8 +130,13 @@ def multi_breed_state(input_state, num, out = False, MP = False, bs_thetas = Non
         if out:
             print('newstate shape', multistate.means.shape, multistate.covs.shape, multistate.weights.shape)
 
+        #if bs_thetas:
+         #   S = beam_splitter(bs_thetas[i-1][0],bs_thetas[i-1][1])
+          #  if out:
+           #     print(f'Applying BS({bs_thetas[i-1][0]}{bs_thetas[i-1][1]}) on modes {i-1},{i}')
+
         if bs_thetas:
-            S = beam_splitter(bs_thetas[i-1][0],bs_thetas[i-1][1])
+            S = beam_splitter(np.arccos(np.sqrt(1/(1+i))),np.pi/4)
             if out:
                 print(f'Applying BS({bs_thetas[i-1][0]}{bs_thetas[i-1][1]}) on modes {i-1},{i}')
         else:
