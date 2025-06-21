@@ -11,7 +11,7 @@ ns = np.arange(2,14)
 etas = np.array([0.96, 0.95])
 r_dBs = np.array([-12,-15])
 parity = 0
-shots = 1000000 #Maybe 5000 is enough
+shots = 100000
 
 times = np.zeros((len(ns),len(etas)))
 
