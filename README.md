@@ -1,5 +1,5 @@
 # breeding
-Repository for analyzing the loss tolerance of cat breeding for fault tolerant GKP state preparation
+Repository for analyzing the loss tolerance of cat breeding for fault tolerant GKP state preparation.
 
 See `notebooks/` for generating the figures in the paper.
 
