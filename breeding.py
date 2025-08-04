@@ -1,7 +1,20 @@
+# Copyright © 2025 Technical University of Denmark
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#     http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import numpy as np
 from copy import copy, deepcopy
 from thewalrus.symplectic import squeezing, beam_splitter, rotation, xxpp_to_xpxp, expand, expand_vector
-from mpmath import mp
 
 
 
@@ -9,7 +22,7 @@ def sim_breeding_circuit(input_state, num, phis, results, out = False, bs_hex = 
     """Simulate the breeding of num copies of the input_state
     """
     multistate = deepcopy(input_state)
-    multistate.normalise()
+    multistate.get_norm()
     n1 = multistate.norm
         
     if out:
@@ -36,6 +49,7 @@ def sim_breeding_circuit(input_state, num, phis, results, out = False, bs_hex = 
         else:
             #Apply beam splitter
             S = beam_splitter(np.arccos(np.sqrt(1/(1+i))),0)
+            #S = beam_splitter(np.arcsin(np.sqrt(1/(1+i))),0)
             if out:
                 print(f'Applying BS({np.arccos(np.sqrt(1/(1+i)))} on modes {i-1},{i}')
 
@@ -57,7 +71,7 @@ def sim_breeding_circuit(input_state, num, phis, results, out = False, bs_hex = 
         if out:
             print('new no. of weights: ', multistate.num_weights)
 
-    multistate.normalise()
+    multistate.get_norm()
             
     return multistate, multistate.norm/n1**num
 
@@ -68,7 +82,7 @@ def sample_breeding_circuit(input_state, num, out = False, bs_thetas = None):
     rejects = np.zeros(num-1)
     
     multistate = deepcopy(input_state)
-    multistate.normalise()
+    multistate.get_norm()
     n1 = multistate.norm
         
     for i in range(1,num):
@@ -108,7 +122,7 @@ def sample_breeding_circuit(input_state, num, out = False, bs_thetas = None):
         if out:
             print('new no. of weights: ', multistate.num_weights)
             print('norm', multistate.norm/n1**i)
-    multistate.normalise()
+    multistate.get_norm()
     
     return multistate, multistate.norm/n1**num, samples, rejects
 

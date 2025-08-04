@@ -1,17 +1,32 @@
+# Copyright © 2025 Technical University of Denmark
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#     http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from breeding import sim_breeding_circuit, sample_breeding_circuit
-from bosonicplus.effective_sqz import effective_sqz
-from bosonicplus.conversions import Delta_to_dB
+from lcg_plus.effective_sqz import effective_sqz
+from lcg_plus.conversions import Delta_to_dB
 
 from catprep import get_input_sq_cat
 import numpy as np
+from time import time
 
+t0 = time()
 
-#Settings 1
-ns = np.arange(2,14)
-etas = np.array([0.96, 0.95])
+ns = np.arange(8,14)
+etas = np.array([1, 0.99, 0.98, 0.97, 0.96, 0.95])
 r_dBs = np.array([-12,-15])
 parity = 0
-shots = 100000
+shots = 100
 
 times = np.zeros((len(ns),len(etas)))
 
@@ -47,5 +62,6 @@ for i, num in enumerate(ns):
             np.save(f'Dp_num={num}_r={r_dB}_eta={eta}.npy', Dp)
             np.save(f'Dx_num={num}_r={r_dB}_eta={eta}.npy', Dx)
 
-
+tf = time()
+print(tf-t0)
     

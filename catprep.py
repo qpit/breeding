@@ -1,12 +1,27 @@
-from bosonicplus.base import State
-from thewalrus.symplectic import squeezing, beam_splitter, rotation, xxpp_to_xpxp, expand, expand_vector
-import numpy as np
-from bosonicplus.conversions import dB_to_r
-from bosonicplus.states.nongauss import prepare_sqz_cat_coherent
+# Copyright © 2025 Technical University of Denmark
 
-hbar = 2
-# Two mode General photon subtraction circuit with twice the squeezing in one mode
-def GPS_Andersen(r, theta, phi, n, alpha = 0, inf = 1e-8):
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#     http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+from lcg_plus.base import State
+from lcg_plus.operations.symplectic import squeezing, rotation, beam_splitter, expand_displacement_vector
+import numpy as np
+from lcg_plus.conversions import dB_to_r
+from lcg_plus.states.nongauss import prepare_sqz_cat_coherent
+
+
+# Two mode General photon subtraction circuit
+def GPS_circuit(r, theta, phi, n, alpha = 0, inf = 1e-8):
     """
     Args: 
         r : squeezing
@@ -15,23 +30,16 @@ def GPS_Andersen(r, theta, phi, n, alpha = 0, inf = 1e-8):
         alpha: disp in mode 0
     """
     state = State(2)
-    S1 = expand(squeezing(r, 0), 0, 2)
-    S2 = expand(squeezing(r, np.pi), 1, 2)
-    R1 = expand(rotation(phi), 0,2)
-    BS = beam_splitter(theta,0)
-    R2 = expand(rotation(-phi/2 + np.pi/2),1,2)
-    Stot = xxpp_to_xpxp(R2 @ BS @ R1 @ S2 @ S1)
-    state.apply_symplectic(Stot)
-    
-    disp = expand_vector(alpha, 0, 2)
-    
-
-    state.apply_displacement(disp)
-    
+    state.apply_symplectic_fast(squeezing(r,0), [0])
+    state.apply_symplectic_fast(squeezing(r,np.pi), [1])
+    state.apply_symplectic_fast(rotation(phi), [0])
+    state.apply_symplectic(beam_splitter(theta,0))
+    state.apply_symplectic_fast(rotation(-phi/2+np.pi/2), [1])
+    disp = np.sqrt(2*state.hbar) * np.array([alpha.real,alpha.imag])
+    state.apply_displacement(expand_displacement_vector(disp, [0], 2))
 
     state.post_select_fock_coherent(0, n, inf = inf)
     return state
-
 
 def get_input_sq_cat(num, r_dB, parity, which, eta, fast = False):
     """Get squeezed cat for input to breeding circuit
@@ -53,6 +61,8 @@ def get_input_sq_cat(num, r_dB, parity, which, eta, fast = False):
 
     if which =='hex':
         sq_cat.apply_symplectic(squeezing(np.log(3**(1/4)), 2*np.pi/4))
+
+    #Scale the means by 1/sqrt(eta)
   
     #Apply loss to squeezed cat
     #---------------------------
